@@ -1,7 +1,7 @@
 #ifndef RAYTRACER_SPHERE_H
 #define RAYTRACER_SPHERE_H
 
-#include <utility>
+#include <memory>
 
 #include "Material.h"
 #include "Surface.h"
@@ -12,8 +12,14 @@ namespace raytracer {
 class Sphere : public Surface
 {
 public:
-    Sphere(Vector3 center, float radius, std::shared_ptr<Material> material)
-            : center_(std::move(center)), radius_(radius), material_(std::move(material))
+    static std::shared_ptr<Sphere> create(
+            const Vector3& center, float radius, const std::shared_ptr<Material>& material)
+    {
+        return std::make_shared<Sphere>(center, radius, material);
+    }
+
+    Sphere(const Vector3& center, float radius, const std::shared_ptr<Material>& material)
+            : center_(center), radius_(radius), material_(material)
     {
         // Do nothing.
     }
@@ -35,7 +41,7 @@ public:
                 return std::make_optional<HitRecord>(t1, point, normal, material_);
             }
             float t2 = (-b + sqrtf(discriminant)) / a;
-            if (t2 >= tMax && t2 < tMax)
+            if (t2 >= tMin && t2 < tMax)
             {
                 Vector3 point = ray.pointAtParameter(t2);
                 Vector3 normal = (point - center_).normalized();

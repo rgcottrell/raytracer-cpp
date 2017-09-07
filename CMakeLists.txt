@@ -1,17 +1,34 @@
 cmake_minimum_required(VERSION 3.8 FATAL_ERROR)
 
-project(raytracer CXX C)
+project(raytracer C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
-# ---[ Eigen
-set(EIGEN_MPL2_ONLY 1)
-find_package(Eigen3 QUIET)
-if (EIGEN3_FOUND)
-    include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
-else()
-    include_directories(SYSTEM ${PROJECT_SOURCE_DIR}/third_party/eigen)
-endif()
+set(SOURCE_FILES
+        raytracer/Camera.h
+        raytracer/CheckerTexture.h
+        raytracer/ConstantTexture.h
+        raytracer/Dielectric.h
+        raytracer/HitRecord.h
+        raytracer/Lambertian.h
+        raytracer/Material.h
+        raytracer/Math.h
+        raytracer/Math.cpp
+        raytracer/Metal.h
+        raytracer/MovingSphere.h
+        raytracer/Ray.h
+        raytracer/ScatterRecord.h
+        raytracer/Sphere.h
+        raytracer/Surface.h
+        raytracer/SurfaceGroup.h
+        raytracer/Texture.h
+        raytracer/Vector3.h
+        raytracer/main.cpp
+        )
 
-# ---[ Main build
-add_subdirectory(raytracer)
+add_executable(raytracer ${SOURCE_FILES})
+
+if(MSVC)
+    target_compile_options(raytracer PRIVATE /std:c++latest)
+    set_target_properties(raytracer PROPERTIES COMPILE_DEFINITIONS "_USE_MATH_DEFINES=1")
+endif()

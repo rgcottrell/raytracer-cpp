@@ -2,11 +2,14 @@
 #include <optional>
 
 #include "Camera.h"
+#include "CheckerTexture.h"
+#include "ConstantTexture.h"
+#include "Dielectric.h"
 #include "Lambertian.h"
 #include "Metal.h"
+#include "MovingSphere.h"
 #include "Sphere.h"
 #include "SurfaceGroup.h"
-#include "Dielectric.h"
 
 using namespace raytracer;
 
@@ -14,13 +17,9 @@ namespace {
 
 constexpr int MAX_DEPTH = 50;
 
-constexpr Vector3 BLACK(0.0f, 0.0f, 0.0f);
-constexpr Vector3 BLUE(0.5f, 0.7f, 1.0f);
-constexpr Vector3 WHITE(1.0f, 1.0f, 1.0f);
-
-Vector3 color(const Ray& ray, const Surface& world, int depth = 0)
+Vector3 color(const Ray& ray, const std::shared_ptr<Surface>& world, int depth = 0)
 {
-    auto hit = world.hit(ray, 0.001f, std::numeric_limits<float>::max());
+    auto hit = world->hit(ray, 0.001f, std::numeric_limits<float>::max());
     if (hit)
     {
         auto scatter = hit->material()->scatter(ray, hit.value());
@@ -28,11 +27,11 @@ Vector3 color(const Ray& ray, const Surface& world, int depth = 0)
         {
             return scatter->attenuation() * color(scatter->ray(), world, depth + 1);
         }
-        return BLACK;
+        return Vector3(0.0f, 0.0f, 0.0f);
     }
     auto unitDirection = ray.direction().normalized();
     float t = 0.5f * (1.0f + unitDirection.y());
-    return (1.0f - t) * WHITE + t * BLUE;
+    return (1.0f - t) * Vector3(1.0f, 1.0f, 1.0f) + t * Vector3(0.5f, 0.7f, 1.0f);
 }
 
 } // namespace
@@ -41,20 +40,23 @@ int main(int argc, char *argv[])
 {
     int nx = 3440;
     int ny = 1440;
-    int ns = 64;
+    int ns = 32;
 
     Vector3 lookFrom(13.0f, 2.0f, 3.0f);
     Vector3 lookAt(0.0f, 0.0f, 0.0f);
     Vector3 vup(0.0f, 1.0f, 0.0f);
     float vfov = 20.0f;
     float aspect = static_cast<float>(nx) / static_cast<float>(ny);
-    float distToFocus = 10.0f;
-    float aperture = 0.75f;
-    Camera camera(lookFrom, lookAt, vup, vfov, aspect, aperture, distToFocus);
+    float aperture = 0.1f;
+    float distToFocus = distance(lookFrom, lookAt);
+    Camera camera(lookFrom, lookAt, vup, vfov, aspect, aperture, distToFocus, 0.0f, 1.0f);
 
     std::vector<std::shared_ptr<Surface>> surfaces;
-    surfaces.emplace_back(std::make_shared<Sphere>(
-            Vector3(0.0f, -1000.0f, 0.0f), 1000.0f, std::make_shared<Lambertian>(Vector3(0.5f, 0.5f, 0.5f))));
+    surfaces.emplace_back(Sphere::create(
+            Vector3(0.0f, -1000.0f, 0.0f), 1000.0f,
+            Lambertian::create(CheckerTexture::create(
+                    ConstantTexture::create(Vector3(0.2f, 0.3f, 0.1f)),
+                    ConstantTexture::create(Vector3(0.9f, 0.9f, 0.9f))))));
     Vector3 deadZone1(-4.0f, 0.2f, 0.0f);
     Vector3 deadZone2(0.0f, 0.2f, 0.0f);
     Vector3 deadZone3(4.0f, 0.2f, 0.0f);
@@ -69,36 +71,37 @@ int main(int argc, char *argv[])
                 float chance = nextRandomNumber();
                 if (chance < 0.75f)
                 {
-                    auto material = std::make_shared<Lambertian>(
+                    auto material = Lambertian::create(ConstantTexture::create(
                             Vector3(nextRandomNumber() * nextRandomNumber(),
                                     nextRandomNumber() * nextRandomNumber(),
-                                    nextRandomNumber() * nextRandomNumber()));
-                    surfaces.emplace_back(std::make_shared<Sphere>(center, 0.2f, material));
+                                    nextRandomNumber() * nextRandomNumber())));
+                    surfaces.emplace_back(MovingSphere::create(
+                            center, center + Vector3(0.0f, nextRandomNumber() * 0.5f, 0.0f), 0.0f, 1.0f, 0.2f, material));
                 }
                 else if (chance < 0.90f)
                 {
-                    auto material = std::make_shared<Metal>(
+                    auto material = Metal::create(ConstantTexture::create(
                             Vector3(0.5f * (1.0f + nextRandomNumber()),
                                     0.5f * (1.0f + nextRandomNumber()),
-                                    0.5f * nextRandomNumber()),
+                                    0.5f * nextRandomNumber())),
                             0.25f * nextRandomNumber());
-                    surfaces.emplace_back(std::make_shared<Sphere>(center, 0.2f, material));
+                    surfaces.emplace_back(Sphere::create(center, 0.2f, material));
                 }
                 else
                 {
-                    auto material = std::make_shared<Dielectric>(1.5f);
-                    surfaces.emplace_back(std::make_shared<Sphere>(center, 0.2f, material));
+                    auto material = Dielectric::create(1.5f);
+                    surfaces.emplace_back(Sphere::create(center, 0.2f, material));
                 }
             }
         }
     }
-    surfaces.emplace_back(std::make_shared<Sphere>(
-            Vector3(-4.0f, 1.0f, 0.0f), 1.0f, std::make_shared<Lambertian>(Vector3(0.4f, 0.2f, 0.1f))));
-    surfaces.emplace_back(std::make_shared<Sphere>(
-            Vector3(0.0f, 1.0f, 0.0f), 1.0f, std::make_shared<Dielectric>(1.5f)));
-    surfaces.emplace_back(std::make_shared<Sphere>(
-            Vector3(4.0f, 1.0f, 0.0f), 1.0f, std::make_shared<Metal>(Vector3(0.7f, 0.6f, 0.5f), 0.0f)));
-    SurfaceGroup world(surfaces);
+    surfaces.emplace_back(Sphere::create(
+            Vector3(-4.0f, 1.0f, 0.0f), 1.0f, Lambertian::create(ConstantTexture::create(Vector3(0.4f, 0.2f, 0.1f)))));
+    surfaces.emplace_back(Sphere::create(
+            Vector3(0.0f, 1.0f, 0.0f), 1.0f, Dielectric::create(1.5f)));
+    surfaces.emplace_back(Sphere::create(
+            Vector3(4.0f, 1.0f, 0.0f), 1.0f, Metal::create(ConstantTexture::create(Vector3(0.7f, 0.6f, 0.5f)), 0.0f)));
+    auto world = SurfaceGroup::create(surfaces);
 
     std::cout << "P3\n" << nx << " " << ny << "\n255\n";
     for (int j = ny - 1; j >= 0; --j)

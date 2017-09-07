@@ -14,6 +14,11 @@ namespace raytracer {
 class Dielectric : public Material
 {
 public:
+    static std::shared_ptr<Dielectric> create(float ri)
+    {
+        return std::make_shared<Dielectric>(ri);
+    }
+
     explicit Dielectric(float ri) : ri_(ri)
     {
         // Do nothing.
@@ -42,9 +47,10 @@ public:
         if (nextRandomNumber() < reflectProbability)
         {
             Vector3 reflected = reflect(ray.direction(), hit.normal());
-            return std::make_optional<ScatterRecord>(Ray(hit.point(), reflected), Vector3(1.0f, 1.0f, 1.0f));
+            return std::make_optional<ScatterRecord>(
+                    Ray(hit.point(), reflected, ray.time()), Vector3(1.0f, 1.0f, 1.0f));
         }
-        return std::make_optional<ScatterRecord>(Ray(hit.point(), *refracted), Vector3(1.0f, 1.0f, 1.0f));
+        return std::make_optional<ScatterRecord>(Ray(hit.point(), *refracted, ray.time()), Vector3(1.0f, 1.0f, 1.0f));
     }
 
 private:

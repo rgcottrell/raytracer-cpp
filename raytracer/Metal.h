@@ -2,11 +2,12 @@
 #define RAYTRACER_METAL_H
 
 #include <algorithm>
+#include <memory>
 #include <optional>
-#include <utility>
 
 #include "Material.h"
 #include "Math.h"
+#include "Texture.h"
 #include "Vector3.h"
 
 namespace raytracer {
@@ -14,8 +15,13 @@ namespace raytracer {
 class Metal : public Material
 {
 public:
-    explicit Metal(Vector3 albedo, float fuzz = 0.0f)
-            : albedo_(std::move(albedo)), fuzz_(std::clamp(fuzz, 0.0f, 1.0f))
+    static std::shared_ptr<Metal> create(const std::shared_ptr<Texture>& albedo, float fuzz)
+    {
+        return std::make_shared<Metal>(albedo, fuzz);
+    }
+
+    explicit Metal(const std::shared_ptr<Texture>& albedo, float fuzz)
+            : albedo_(albedo), fuzz_(std::clamp(fuzz, 0.0f, 1.0f))
     {
         // Do nothing.
     }
@@ -25,14 +31,14 @@ public:
         auto reflected = reflect(ray.direction().normalized(), hit.normal());
         if (dot(reflected, hit.normal()) > 0.0f)
         {
-            Ray rayOut(hit.point(), reflected + fuzz_ * randomInUnitSphere());
-            return std::make_optional<ScatterRecord>(rayOut, albedo_);
+            Ray rayOut(hit.point(), reflected + fuzz_ * randomInUnitSphere(), ray.time());
+            return std::make_optional<ScatterRecord>(rayOut, albedo_->value(0.0f, 0.0f, hit.point()));
         }
         return std::nullopt;
     }
 
 private:
-    Vector3 albedo_;
+    std::shared_ptr<Texture> albedo_;
     float fuzz_;
 };
 

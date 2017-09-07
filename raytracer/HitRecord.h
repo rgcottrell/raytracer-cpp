@@ -2,7 +2,6 @@
 #define RAYTRACER_HITRECORD_H
 
 #include <memory>
-#include <utility>
 
 #include "Vector3.h"
 
@@ -13,15 +12,10 @@ class Material;
 class HitRecord
 {
 public:
-    HitRecord(float t, Vector3 point, Vector3 normal, std::shared_ptr<Material> material)
-            : t_(t), point_(std::move(point)), normal_(std::move(normal)), material_(std::move(material))
+    HitRecord(float t, const Vector3& point, const Vector3& normal, const std::shared_ptr<Material>& material)
+            : t_(t), point_(point), normal_(normal), material_(material)
     {
         // Do nothing.
-    }
-
-    float t() const
-    {
-        return t_;
     }
 
     const Vector3& point() const
@@ -37,6 +31,11 @@ public:
     const std::shared_ptr<Material>& material() const
     {
         return material_;
+    }
+
+    float t() const
+    {
+        return t_;
     }
 
 private:

@@ -8,7 +8,7 @@ namespace raytracer {
 
 class ScatterRecord {
 public:
-    ScatterRecord(Ray ray, Vector3 attenuation) : ray_(std::move(ray)), attenuation_(std::move(attenuation))
+    ScatterRecord(const Ray& ray, const Vector3& attenuation) : ray_(ray), attenuation_(attenuation)
     {
         // Do nothing.
     }

@@ -1,8 +1,6 @@
 #ifndef RAYTRACER_RAY_H
 #define RAYTRACER_RAY_H
 
-#include <utility>
-
 #include "Vector3.h"
 
 namespace raytracer {
@@ -10,7 +8,8 @@ namespace raytracer {
 class Ray
 {
 public:
-    Ray(Vector3 origin, Vector3 direction) : origin_(std::move(origin)), direction_(std::move(direction))
+    Ray(const Vector3& origin, const Vector3& direction, float time)
+            : origin_(origin), direction_(direction), time_(time)
     {
         // Do nothing.
     }
@@ -25,6 +24,11 @@ public:
         return direction_;
     }
 
+    float time() const
+    {
+        return time_;
+    }
+
     Vector3 pointAtParameter(float t) const
     {
         return origin_ + t * direction_;
@@ -33,6 +37,7 @@ public:
 private:
     Vector3 origin_;
     Vector3 direction_;
+    float time_;
 };
 
 } // namespace raytracer

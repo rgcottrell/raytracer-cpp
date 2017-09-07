@@ -2,7 +2,6 @@
 #define RAYTRACER_SURFACEGROUP_H
 
 #include <memory>
-#include <utility>
 #include <vector>
 
 #include "Surface.h"
@@ -12,7 +11,12 @@ namespace raytracer {
 class SurfaceGroup : public Surface
 {
 public:
-    explicit SurfaceGroup(std::vector<std::shared_ptr<Surface>> surfaces) : surfaces_(std::move(surfaces))
+    static std::shared_ptr<SurfaceGroup> create(const std::vector<std::shared_ptr<Surface>>& surfaces)
+    {
+        return std::make_shared<SurfaceGroup>(surfaces);
+    }
+
+    explicit SurfaceGroup(const std::vector<std::shared_ptr<Surface>>& surfaces) : surfaces_(surfaces)
     {
         // Do nothing.
     }
