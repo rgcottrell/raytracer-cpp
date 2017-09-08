@@ -16,6 +16,11 @@ public:
         return std::make_shared<ConstantTexture>(color);
     }
 
+    static std::shared_ptr<ConstantTexture> create(float red, float green, float blue)
+    {
+        return std::make_shared<ConstantTexture>(Vector3(red, green, blue));
+    }
+
     explicit ConstantTexture(const Vector3& color) : color_(color)
     {
         // Do nothing.

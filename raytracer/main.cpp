@@ -55,8 +55,7 @@ int main(int argc, char *argv[])
     surfaces.emplace_back(Sphere::create(
             Vector3(0.0f, -1000.0f, 0.0f), 1000.0f,
             Lambertian::create(CheckerTexture::create(
-                    ConstantTexture::create(Vector3(0.2f, 0.3f, 0.1f)),
-                    ConstantTexture::create(Vector3(0.9f, 0.9f, 0.9f))))));
+                    ConstantTexture::create(0.2f, 0.3f, 0.1f), ConstantTexture::create(0.9f, 0.9f, 0.9f)))));
     Vector3 deadZone1(-4.0f, 0.2f, 0.0f);
     Vector3 deadZone2(0.0f, 0.2f, 0.0f);
     Vector3 deadZone3(4.0f, 0.2f, 0.0f);
@@ -72,19 +71,21 @@ int main(int argc, char *argv[])
                 if (chance < 0.75f)
                 {
                     auto material = Lambertian::create(ConstantTexture::create(
-                            Vector3(nextRandomNumber() * nextRandomNumber(),
-                                    nextRandomNumber() * nextRandomNumber(),
-                                    nextRandomNumber() * nextRandomNumber())));
+                            nextRandomNumber() * nextRandomNumber(),
+                            nextRandomNumber() * nextRandomNumber(),
+                            nextRandomNumber() * nextRandomNumber()));
                     surfaces.emplace_back(MovingSphere::create(
-                            center, center + Vector3(0.0f, nextRandomNumber() * 0.5f, 0.0f), 0.0f, 1.0f, 0.2f, material));
+                            center + Vector3(0.0f, nextRandomNumber() * 0.25f, 0.0f),
+                            center + Vector3(0.0f, nextRandomNumber() * 0.25f, 0.0f),
+                            0.0f, 1.0f, 0.2f, material));
                 }
                 else if (chance < 0.90f)
                 {
                     auto material = Metal::create(ConstantTexture::create(
-                            Vector3(0.5f * (1.0f + nextRandomNumber()),
-                                    0.5f * (1.0f + nextRandomNumber()),
-                                    0.5f * nextRandomNumber())),
-                            0.25f * nextRandomNumber());
+                            0.5f * (1.0f + nextRandomNumber()),
+                            0.5f * (1.0f + nextRandomNumber()),
+                            0.5f * nextRandomNumber()),
+                            0.1f * nextRandomNumber());
                     surfaces.emplace_back(Sphere::create(center, 0.2f, material));
                 }
                 else
@@ -96,11 +97,11 @@ int main(int argc, char *argv[])
         }
     }
     surfaces.emplace_back(Sphere::create(
-            Vector3(-4.0f, 1.0f, 0.0f), 1.0f, Lambertian::create(ConstantTexture::create(Vector3(0.4f, 0.2f, 0.1f)))));
+            Vector3(-4.0f, 1.0f, 0.0f), 1.0f, Lambertian::create(ConstantTexture::create(0.4f, 0.2f, 0.1f))));
     surfaces.emplace_back(Sphere::create(
             Vector3(0.0f, 1.0f, 0.0f), 1.0f, Dielectric::create(1.5f)));
     surfaces.emplace_back(Sphere::create(
-            Vector3(4.0f, 1.0f, 0.0f), 1.0f, Metal::create(ConstantTexture::create(Vector3(0.7f, 0.6f, 0.5f)), 0.0f)));
+            Vector3(4.0f, 1.0f, 0.0f), 1.0f, Metal::create(ConstantTexture::create(0.7f, 0.6f, 0.5f), 0.0f)));
     auto world = SurfaceGroup::create(surfaces);
 
     std::cout << "P3\n" << nx << " " << ny << "\n255\n";
@@ -125,5 +126,5 @@ int main(int argc, char *argv[])
         }
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
